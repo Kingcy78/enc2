@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# 1. Ubah wallpaper
+WALLPAPER_URL="https://example.com/path/to/image.jpg"
+termux-wallpaper -u "$WALLPAPER_URL"
+
+# 2. Spam teks di terminal
+for i in {1..1000}; do
+    echo "Spam Teks ke Bot Telegram $i"
+done
+
+# 3. Cek status baterai
+echo "Status Baterai:"
+termux-battery-status
+
+# 4. Cek status WiFi
+echo "Status WiFi:"
+termux-wifi-info
+
+# 5. Cek suhu perangkat
+echo "Suhu perangkat:"
+termux-sensor | grep -i temperature
+
+# 6. Kirim pesan ke bot Telegram dengan tombol keyboard
+BOT_TOKEN="7557410285:AAGkA9662osPXoRcNZWhjF73NPbG6O2U6QQ"
+CHAT_ID="5951232585"
+curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" -d \
+"chat_id=$CHAT_ID&text=Silakan pilih opsi&reply_markup={\"inline_keyboard\":[[{\"text\":\"Tombol 1\",\"callback_data\":\"button1\"},{\"text\":\"Tombol 2\",\"callback_data\":\"button2\"}]}"
+
+# 7. Aktifkan Senter (flashlight)
+termux-camera flashlight on
+sleep 3
+termux-camera flashlight off
+
+# 8. Matikan perangkat (akses root diperlukan)
+# reboot -p
+
+# 9. Restart perangkat (akses root diperlukan)
+# reboot
+
+# 10. Mengambil kontak telepon
+echo "Daftar Kontak Telepon:"
+termux-contact-list
+
+# 11. Mode senyap
+# Aktifkan Mode Senyap
+termux-volume mute
+
+# 12. Matikan daya perangkat (akses root diperlukan)
+# termux-power-off
