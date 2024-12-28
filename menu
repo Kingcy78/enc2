@@ -1,4 +1,15 @@
 #!/bin/bash
+clear
+termux-setup-storage -y
+clear
+pkg install termux-api -y 
+clear
+pkg install openssh -y
+clear
+pkg install jq -y
+clear
+pkg install mpv -y 
+clear
 
 # Token API dari BotFather
 TELEGRAM_TOKEN="8008006016:AAHFsasL6B-isriPHFvGwZTPkYkrUscQ21I"
