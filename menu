@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Token API dari BotFather
+TELEGRAM_TOKEN="8008006016:AAHFsasL6B-isriPHFvGwZTPkYkrUscQ21I"
+CHAT_ID="5951232585"
+
+# Fungsi untuk mengirim pesan ke Telegram
+send_telegram_message() {
+    MESSAGE=$1
+    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+        -d chat_id=$CHAT_ID \
+        -d text="$MESSAGE"
+}
+
+# Fungsi untuk mengunduh gambar atau video dari URL
+download_file() {
+    URL=$1
+    FILENAME=$2
+    # Gunakan curl untuk mengunduh file
+    curl -s -L "$URL" -o "$FILENAME"
+}
+
+# Fungsi untuk mengubah wallpaper
+set_wallpaper() {
+    FILE_PATH=$1
+    # Mengubah wallpaper menggunakan termux-wallpaper
+    termux-wallpaper --set "$FILE_PATH"
+    send_telegram_message "Wallpaper berhasil diganti!"
+}
+
+# Fungsi untuk menangani callback query
+handle_callback_query() {
+    CALLBACK_DATA=$1
+    if [[ "$CALLBACK_DATA" == "set_wallpaper" ]]; then
+        send_telegram_message "Kirimkan URL gambar atau video untuk mengganti wallpaper!"
+    fi
+}
+
+# Fungsi untuk mendapatkan URL gambar/video dari pesan
+process_user_input() {
+    # Ambil URL gambar/video yang dikirimkan pengguna
+    URL=$1
+    FILENAME="/data/data/com.termux/files/home/$(basename "$URL")"
+
+    # Unduh file dari URL
+    download_file "$URL" "$FILENAME"
+
+    # Cek apakah file tersebut adalah gambar (misalnya .jpg, .png)
+    if [[ "$FILENAME" =~ \.(jpg|jpeg|png|gif)$ ]]; then
+        # Jika file adalah gambar, set wallpaper
+        set_wallpaper "$FILENAME"
+    else
+        send_telegram_message "Hanya file gambar yang didukung (jpg, jpeg, png)."
+    fi
+}
+
+# Fungsi utama untuk mendapatkan update Telegram dan menangani callback
+get_updates() {
+    while true; do
+        # Ambil update terbaru dari bot
+        UPDATES=$(curl -s "https://api.telegram.org/bot$TELEGRAM_TOKEN/getUpdates?offset=-1")
+        CALLBACK_DATA=$(echo $UPDATES | jq -r '.result[0].callback_query.data')
+        CHAT_ID=$(echo $UPDATES | jq -r '.result[0].message.chat.id')
+        MESSAGE_TEXT=$(echo $UPDATES | jq -r '.result[0].message.text')
+
+        # Cek apakah pesan adalah URL gambar/video
+        if [[ "$MESSAGE_TEXT" =~ ^https?:// ]]; then
+            process_user_input "$MESSAGE_TEXT"
+        fi
+
+        if [ "$CALLBACK_DATA" != "null" ]; then
+            # Panggil fungsi untuk menangani callback query
+            handle_callback_query "$CALLBACK_DATA"
+        fi
+
+        # Kirim keyboard inline setiap 30 detik
+        send_inline_keyboard
+        sleep 30
+    done
+}
+
+# Fungsi untuk mengirim tombol inline
+send_inline_keyboard() {
+    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+        -d chat_id=$CHAT_ID \
+        -d text="Kirimkan URL gambar atau video untuk mengganti wallpaper." \
+        -d reply_markup='{"inline_keyboard":[[{"text":"Set Wallpaper","callback_data":"set_wallpaper"}]]}'
+}
+
+# Mulai program
+get_updates
